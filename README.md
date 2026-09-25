@@ -92,9 +92,12 @@ if [[ "${EXPECTED_LOWER}" != "${ACTUAL_LOWER}" ]]; then
 fi
 
 mkdir -p "${INSTALL_DIR}"
-command -v install >/dev/null 2>&1 \
-  || { echo "Error: install command not found" >&2; exit 1; }
-install -m 0755 "${TMP_DIR}/${BINARY}" "${INSTALL_DIR}/opct"
+if command -v install >/dev/null 2>&1; then
+  install -m 0755 "${TMP_DIR}/${BINARY}" "${INSTALL_DIR}/opct"
+else
+  cp "${TMP_DIR}/${BINARY}" "${INSTALL_DIR}/opct"
+  chmod 0755 "${INSTALL_DIR}/opct"
+fi
 
 echo "Installed: ${INSTALL_DIR}/opct"
 
