@@ -414,7 +414,14 @@ func (r *RunOptions) PreRunSetup(kclient kubernetes.Interface) error {
 	// Create the Deployment of dedicated-e2e-controller.
 	// The controller watches for new pods failed to schedule, and apply
 	// tolerations.
-	// TODO(mtulio): change the image registry to dynamic to support disconnected setup.
+	// In disconnected setups (--image-repository) the controller image is
+	// pulled from the mirror repository, tagged with the running CLI
+	// version to avoid version skew, instead of the default quay.io
+	// registry which is unreachable from an offline cluster.
+	controllerImage := pkg.ControllerImage
+	if r.imageRepository != "" {
+		controllerImage = fmt.Sprintf("%s/opct:%s", r.imageRepository, version.Version.Version)
+	}
 	if r.dedicated {
 		deployment := &appsv1.Deployment{
 			ObjectMeta: metav1.ObjectMeta{
@@ -440,7 +447,7 @@ func (r *RunOptions) PreRunSetup(kclient kubernetes.Interface) error {
 						Containers: []v1.Container{
 							{
 								Name:            "controller",
-								Image:           pkg.ControllerImage,
+								Image:           controllerImage,
 								ImagePullPolicy: v1.PullAlways,
 								Command: []string{
 									"opct",
